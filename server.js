@@ -7,13 +7,22 @@ const io = require("socket.io")(http, {
 
 app.use(express.static("public"));
 
+/* 👁️ CONTADOR DE USUARIOS */
+let viewers = 0;
+
 io.on("connection", (socket) => {
 
+  // 🔴 broadcaster (emisor)
   socket.on("broadcaster", () => {
     socket.broadcast.emit("broadcaster");
   });
 
+  // 👁️ viewer (receptor)
   socket.on("watcher", () => {
+    viewers++;
+
+    io.emit("viewerCount", viewers); // 🔥 enviar a todos
+
     socket.broadcast.emit("watcher", socket.id);
   });
 
@@ -29,7 +38,14 @@ io.on("connection", (socket) => {
     io.to(id).emit("candidate", socket.id, message);
   });
 
+  // ❌ cuando alguien se va
   socket.on("disconnect", () => {
+
+    viewers--;
+    if (viewers < 0) viewers = 0;
+
+    io.emit("viewerCount", viewers); // 🔥 actualizar todos
+
     socket.broadcast.emit("disconnectPeer", socket.id);
   });
 
