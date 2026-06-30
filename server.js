@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const http = require("http").createServer(app);
+
 const io = require("socket.io")(http, {
   cors: { origin: "*" }
 });
@@ -21,9 +22,13 @@ io.on("connection", (socket) => {
 
   // 👁️ viewer (receptor)
   socket.on("watcher", () => {
-    viewers++;
 
-    io.emit("viewerCount", viewers); // 🔥 enviar a todos
+    if (!socket.isViewer) {
+      socket.isViewer = true;
+      viewers++;
+    }
+
+    io.emit("viewerCount", viewers);
 
     socket.broadcast.emit("watcher", socket.id);
   });
@@ -43,8 +48,10 @@ io.on("connection", (socket) => {
   // ❌ cuando alguien se va
   socket.on("disconnect", () => {
 
-    viewers--;
-    if (viewers < 0) viewers = 0;
+    if (socket.isViewer) {
+      viewers--;
+      if (viewers < 0) viewers = 0;
+    }
 
     io.emit("viewerCount", viewers);
 
