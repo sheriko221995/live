@@ -1,35 +1,19 @@
 const express = require("express");
 const app = express();
 const http = require("http").createServer(app);
-
 const io = require("socket.io")(http, {
   cors: { origin: "*" }
 });
 
 app.use(express.static("public"));
 
-/* 👁️ CONTADOR DE USUARIOS */
-let viewers = 0;
-
 io.on("connection", (socket) => {
 
-  socket.isViewer = false;
-
-  // 🔴 broadcaster (emisor)
   socket.on("broadcaster", () => {
     socket.broadcast.emit("broadcaster");
   });
 
-  // 👁️ viewer (receptor)
   socket.on("watcher", () => {
-
-    if (!socket.isViewer) {
-      socket.isViewer = true;
-      viewers++;
-    }
-
-    io.emit("viewerCount", viewers);
-
     socket.broadcast.emit("watcher", socket.id);
   });
 
@@ -45,16 +29,7 @@ io.on("connection", (socket) => {
     io.to(id).emit("candidate", socket.id, message);
   });
 
-  // ❌ cuando alguien se va
   socket.on("disconnect", () => {
-
-    if (socket.isViewer) {
-      viewers--;
-      if (viewers < 0) viewers = 0;
-    }
-
-    io.emit("viewerCount", viewers);
-
     socket.broadcast.emit("disconnectPeer", socket.id);
   });
 
