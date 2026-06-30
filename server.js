@@ -12,6 +12,8 @@ let viewers = 0;
 
 io.on("connection", (socket) => {
 
+  socket.isViewer = false;
+
   // 🔴 broadcaster (emisor)
   socket.on("broadcaster", () => {
     socket.broadcast.emit("broadcaster");
@@ -44,7 +46,7 @@ io.on("connection", (socket) => {
     viewers--;
     if (viewers < 0) viewers = 0;
 
-    io.emit("viewerCount", viewers); // 🔥 actualizar todos
+    io.emit("viewerCount", viewers);
 
     socket.broadcast.emit("disconnectPeer", socket.id);
   });
